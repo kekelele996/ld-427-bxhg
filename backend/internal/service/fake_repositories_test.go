@@ -287,3 +287,64 @@ func (f *fakeAuditRepo) List(_ context.Context, filter repository.AuditListFilte
 	}
 	return out, int64(len(out)), nil
 }
+
+type fakeRefundRepo struct {
+	nextID  uint
+	refunds map[uint]*model.ExpenseRefund
+}
+
+func newFakeRefundRepo() *fakeRefundRepo {
+	return &fakeRefundRepo{nextID: 1, refunds: make(map[uint]*model.ExpenseRefund)}
+}
+
+func (f *fakeRefundRepo) Create(_ context.Context, refund *model.ExpenseRefund) error {
+	for _, r := range f.refunds {
+		if r.VoucherNo == refund.VoucherNo {
+			return repository.ErrDuplicateRefundVoucher
+		}
+	}
+	refund.ID = f.nextID
+	f.nextID++
+	cp := *refund
+	f.refunds[cp.ID] = &cp
+	*refund = cp
+	return nil
+}
+
+func (f *fakeRefundRepo) FindByID(_ context.Context, id uint) (*model.ExpenseRefund, error) {
+	v, ok := f.refunds[id]
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	cp := *v
+	return &cp, nil
+}
+
+func (f *fakeRefundRepo) ListByExpenseID(_ context.Context, expenseID uint) ([]model.ExpenseRefund, error) {
+	var out []model.ExpenseRefund
+	for _, v := range f.refunds {
+		if v.ExpenseID == expenseID {
+			out = append(out, *v)
+		}
+	}
+	return out, nil
+}
+
+func (f *fakeRefundRepo) ExistsByVoucherNo(_ context.Context, voucherNo string) (bool, error) {
+	for _, r := range f.refunds {
+		if r.VoucherNo == voucherNo {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (f *fakeRefundRepo) SumAmountByExpenseID(_ context.Context, expenseID uint) (float64, error) {
+	var total float64
+	for _, r := range f.refunds {
+		if r.ExpenseID == expenseID {
+			total += r.Amount
+		}
+	}
+	return total, nil
+}

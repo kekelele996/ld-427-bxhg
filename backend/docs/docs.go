@@ -816,6 +816,106 @@ const docTemplate = `{
                 }
             }
         },
+        "/expenses/{id}/refunds": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expenses"
+                ],
+                "summary": "查询支出退款记录",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "支出记录ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expenses"
+                ],
+                "summary": "登记退款",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "支出记录ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "退款登记请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RegisterRefundRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    }
+                }
+            }
+        },
         "/expenses/{id}/reject": {
             "post": {
                 "security": [
@@ -1746,6 +1846,31 @@ const docTemplate = `{
             "properties": {
                 "payment_date": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.RegisterRefundRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "reason",
+                "received_date",
+                "voucher_no"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "reason": {
+                    "type": "string",
+                    "maxLength": 512
+                },
+                "received_date": {
+                    "type": "string"
+                },
+                "voucher_no": {
+                    "type": "string",
+                    "maxLength": 128
                 }
             }
         },

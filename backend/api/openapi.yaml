@@ -50,6 +50,38 @@ paths:
       security: [{ BearerAuth: [] }]
       responses:
         "200": { description: ok }
+  /expenses/{id}/refunds:
+    get:
+      summary: 查询支出退款记录（含已退金额、剩余可退金额）
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200": { description: ok }
+        "404": { description: 支出不存在 }
+    post:
+      summary: 登记退款（仅已付款支出，累计退款不得超过实付金额）
+      description: 财务分次登记退款金额、到账日期和原因；退款成功后回冲预算分项与预算表已用金额。退款凭据号重复时只入账第一次。
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, received_date, reason, voucher_no]
+              properties:
+                amount: { type: number, format: double, minimum: 0, exclusiveMinimum: true }
+                received_date: { type: string, format: date, example: "2026-09-01" }
+                reason: { type: string, maxLength: 512 }
+                voucher_no: { type: string, maxLength: 128, description: 退款凭据号，全局唯一 }
+      responses:
+        "200": { description: ok }
+        "400": { description: 参数错误 }
+        "404": { description: 支出不存在 }
+        "409": { description: 支出未付款 / 累计退款超过实付金额 / 凭据号重复 }
   /suppliers:
     get:
       summary: 查询供应商列表
