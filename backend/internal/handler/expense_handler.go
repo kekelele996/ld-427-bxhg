@@ -14,13 +14,14 @@ import (
 
 // ExpenseHandler 支出记录处理层。
 type ExpenseHandler struct {
-	service *service.ExpenseService
-	logger  *slog.Logger
+	service   *service.ExpenseService
+	refundSvc *service.RefundService
+	logger    *slog.Logger
 }
 
 // NewExpenseHandler 构造支出记录处理层。
-func NewExpenseHandler(service *service.ExpenseService, logger *slog.Logger) *ExpenseHandler {
-	return &ExpenseHandler{service: service, logger: logger}
+func NewExpenseHandler(expenseService *service.ExpenseService, refundService *service.RefundService, logger *slog.Logger) *ExpenseHandler {
+	return &ExpenseHandler{service: expenseService, refundSvc: refundService, logger: logger}
 }
 
 // Create 创建支出记录。
@@ -86,12 +87,12 @@ func (h *ExpenseHandler) Get(c *gin.Context) {
 	if !ok {
 		return
 	}
-	record, err := h.service.Get(context.Background(), id)
+	detail, err := h.refundSvc.GetExpenseDetail(context.Background(), id)
 	if err != nil {
 		handleError(c, err)
 		return
 	}
-	response.OK(c, record)
+	response.OK(c, detail)
 }
 
 // Submit 提交支出并冻结预算。

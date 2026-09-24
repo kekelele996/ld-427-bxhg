@@ -117,6 +117,7 @@ func initDB(cfg *config.Config, logger *slog.Logger) (*gorm.DB, error) {
 		&model.BudgetSheet{},
 		&model.BudgetItem{},
 		&model.ExpenseRecord{},
+		&model.RefundRecord{},
 		&model.Supplier{},
 		&model.Reconciliation{},
 		&model.AuditLog{},
@@ -152,14 +153,17 @@ func buildEngine(cfg *config.Config, db *gorm.DB, rdb *redis.Client, logger *slo
 	budgetRepo := repository.NewBudgetRepository(db)
 	itemRepo := repository.NewItemRepository(db)
 	expenseRepo := repository.NewExpenseRepository(db)
+	refundRepo := repository.NewRefundRepository(db)
 	supplierRepo := repository.NewSupplierRepository(db)
 	reconciliationRepo := repository.NewReconciliationRepository(db)
+	txManager := repository.NewTxManager(db)
 
 	auditService := service.NewAuditService(auditRepo, logger)
 	authService := service.NewAuthService(userRepo, cfg, logger)
 	budgetService := service.NewBudgetService(budgetRepo, itemRepo, auditService, rdb, logger)
 	itemService := service.NewItemService(itemRepo, budgetRepo, auditService, rdb, logger)
 	expenseService := service.NewExpenseService(expenseRepo, itemRepo, budgetRepo, auditService, rdb, logger)
+	refundService := service.NewRefundService(txManager, refundRepo, expenseRepo, itemRepo, budgetRepo, auditService, rdb, logger)
 	supplierService := service.NewSupplierService(supplierRepo, auditService, logger)
 	reconciliationService := service.NewReconciliationService(reconciliationRepo, auditService, logger)
 
@@ -172,7 +176,8 @@ func buildEngine(cfg *config.Config, db *gorm.DB, rdb *redis.Client, logger *slo
 		AuditHandler:          handler.NewAuditHandler(auditService, logger),
 		BudgetHandler:         handler.NewBudgetHandler(budgetService, logger),
 		ItemHandler:           handler.NewItemHandler(itemService, logger),
-		ExpenseHandler:        handler.NewExpenseHandler(expenseService, logger),
+		ExpenseHandler:        handler.NewExpenseHandler(expenseService, refundService, logger),
+		RefundHandler:         handler.NewRefundHandler(refundService, logger),
 		SupplierHandler:       handler.NewSupplierHandler(supplierService, logger),
 		ReconciliationHandler: handler.NewReconciliationHandler(reconciliationService, logger),
 	})

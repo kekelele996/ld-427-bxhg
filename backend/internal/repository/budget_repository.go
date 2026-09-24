@@ -37,7 +37,7 @@ func NewBudgetRepository(db *gorm.DB) BudgetRepository {
 }
 
 func (r *budgetRepository) Create(ctx context.Context, sheet *model.BudgetSheet) error {
-	if err := r.db.WithContext(ctx).Create(sheet).Error; err != nil {
+	if err := connFor(ctx, r.db).Create(sheet).Error; err != nil {
 		return fmt.Errorf("create budget sheet: %w", err)
 	}
 	return nil
@@ -45,7 +45,7 @@ func (r *budgetRepository) Create(ctx context.Context, sheet *model.BudgetSheet)
 
 func (r *budgetRepository) FindByID(ctx context.Context, id uint) (*model.BudgetSheet, error) {
 	var sheet model.BudgetSheet
-	if err := r.db.WithContext(ctx).Preload("Items").First(&sheet, id).Error; err != nil {
+	if err := connFor(ctx, r.db).Preload("Items").First(&sheet, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrNotFound
 		}
@@ -56,7 +56,7 @@ func (r *budgetRepository) FindByID(ctx context.Context, id uint) (*model.Budget
 
 func (r *budgetRepository) List(ctx context.Context, filter BudgetListFilter) ([]model.BudgetSheet, int64, error) {
 	page, pageSize := normalizePage(filter.Page, filter.PageSize)
-	q := r.db.WithContext(ctx).Model(&model.BudgetSheet{})
+	q := connFor(ctx, r.db).Model(&model.BudgetSheet{})
 	if filter.ProjectID != "" {
 		q = q.Where("project_id = ?", filter.ProjectID)
 	}
@@ -75,14 +75,14 @@ func (r *budgetRepository) List(ctx context.Context, filter BudgetListFilter) ([
 }
 
 func (r *budgetRepository) Update(ctx context.Context, sheet *model.BudgetSheet) error {
-	if err := r.db.WithContext(ctx).Save(sheet).Error; err != nil {
+	if err := connFor(ctx, r.db).Save(sheet).Error; err != nil {
 		return fmt.Errorf("update budget sheet %d: %w", sheet.ID, err)
 	}
 	return nil
 }
 
 func (r *budgetRepository) Delete(ctx context.Context, id uint) error {
-	if err := r.db.WithContext(ctx).Delete(&model.BudgetSheet{}, id).Error; err != nil {
+	if err := connFor(ctx, r.db).Delete(&model.BudgetSheet{}, id).Error; err != nil {
 		return fmt.Errorf("delete budget sheet %d: %w", id, err)
 	}
 	return nil

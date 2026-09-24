@@ -19,6 +19,7 @@ func newTestDB(t *testing.T) *gorm.DB {
 		&model.BudgetSheet{},
 		&model.BudgetItem{},
 		&model.ExpenseRecord{},
+		&model.RefundRecord{},
 		&model.Supplier{},
 		&model.Reconciliation{},
 		&model.Role{},

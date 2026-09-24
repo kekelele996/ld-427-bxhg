@@ -22,6 +22,7 @@ type ExpenseRecord struct {
 	ApprovedByID    *uint                   `json:"approved_by_id"`
 	ApprovalComment string                  `gorm:"size:512" json:"approval_comment"`
 	PaymentDate     *time.Time              `json:"payment_date"`
+	RefundedAmount  float64                 `gorm:"not null;default:0" json:"refunded_amount"`
 	CreatedAt       time.Time               `json:"created_at"`
 	UpdatedAt       time.Time               `json:"updated_at"`
 }

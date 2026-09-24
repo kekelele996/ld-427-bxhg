@@ -134,6 +134,10 @@ func (f *fakeExpenseRepo) FindByID(_ context.Context, id uint) (*model.ExpenseRe
 	return &cp, nil
 }
 
+func (f *fakeExpenseRepo) FindByIDForUpdate(ctx context.Context, id uint) (*model.ExpenseRecord, error) {
+	return f.FindByID(ctx, id)
+}
+
 func (f *fakeExpenseRepo) List(_ context.Context, filter repository.ExpenseListFilter) ([]model.ExpenseRecord, int64, error) {
 	var out []model.ExpenseRecord
 	for _, v := range f.records {
@@ -286,4 +290,57 @@ func (f *fakeAuditRepo) List(_ context.Context, filter repository.AuditListFilte
 		out = append(out, v)
 	}
 	return out, int64(len(out)), nil
+}
+
+type fakeRefundRepo struct {
+	nextID  uint
+	records map[uint]*model.RefundRecord
+}
+
+func newFakeRefundRepo() *fakeRefundRepo {
+	return &fakeRefundRepo{nextID: 1, records: make(map[uint]*model.RefundRecord)}
+}
+
+func (f *fakeRefundRepo) Create(_ context.Context, record *model.RefundRecord) error {
+	for _, existing := range f.records {
+		if existing.VoucherNo == record.VoucherNo {
+			return repository.ErrDuplicateVoucherNo
+		}
+	}
+	record.ID = f.nextID
+	f.nextID++
+	cp := *record
+	f.records[cp.ID] = &cp
+	*record = cp
+	return nil
+}
+
+func (f *fakeRefundRepo) FindByID(_ context.Context, id uint) (*model.RefundRecord, error) {
+	v, ok := f.records[id]
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	cp := *v
+	return &cp, nil
+}
+
+func (f *fakeRefundRepo) ListByExpenseID(_ context.Context, expenseID uint) ([]model.RefundRecord, error) {
+	var out []model.RefundRecord
+	for _, v := range f.records {
+		if v.ExpenseID == expenseID {
+			out = append(out, *v)
+		}
+	}
+	return out, nil
+}
+
+// fakeTxManager 直接在同一上下文执行事务体，fake 仓储本身为内存态。
+type fakeTxManager struct{}
+
+func newFakeTxManager() repository.TxManager {
+	return fakeTxManager{}
+}
+
+func (fakeTxManager) WithinTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	return fn(ctx)
 }

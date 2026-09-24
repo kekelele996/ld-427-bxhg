@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/renovation/renovation-budget-api/internal/model"
 )
@@ -23,6 +24,7 @@ type ExpenseListFilter struct {
 type ExpenseRepository interface {
 	Create(ctx context.Context, record *model.ExpenseRecord) error
 	FindByID(ctx context.Context, id uint) (*model.ExpenseRecord, error)
+	FindByIDForUpdate(ctx context.Context, id uint) (*model.ExpenseRecord, error)
 	List(ctx context.Context, filter ExpenseListFilter) ([]model.ExpenseRecord, int64, error)
 	Update(ctx context.Context, record *model.ExpenseRecord) error
 }
@@ -37,7 +39,7 @@ func NewExpenseRepository(db *gorm.DB) ExpenseRepository {
 }
 
 func (r *expenseRepository) Create(ctx context.Context, record *model.ExpenseRecord) error {
-	if err := r.db.WithContext(ctx).Create(record).Error; err != nil {
+	if err := connFor(ctx, r.db).Create(record).Error; err != nil {
 		return fmt.Errorf("create expense record: %w", err)
 	}
 	return nil
@@ -45,7 +47,7 @@ func (r *expenseRepository) Create(ctx context.Context, record *model.ExpenseRec
 
 func (r *expenseRepository) FindByID(ctx context.Context, id uint) (*model.ExpenseRecord, error) {
 	var record model.ExpenseRecord
-	if err := r.db.WithContext(ctx).First(&record, id).Error; err != nil {
+	if err := connFor(ctx, r.db).First(&record, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrNotFound
 		}
@@ -54,9 +56,20 @@ func (r *expenseRepository) FindByID(ctx context.Context, id uint) (*model.Expen
 	return &record, nil
 }
 
+func (r *expenseRepository) FindByIDForUpdate(ctx context.Context, id uint) (*model.ExpenseRecord, error) {
+	var record model.ExpenseRecord
+	if err := connFor(ctx, r.db).Clauses(clause.Locking{Strength: "UPDATE"}).First(&record, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("find expense record %d for update: %w", id, err)
+	}
+	return &record, nil
+}
+
 func (r *expenseRepository) List(ctx context.Context, filter ExpenseListFilter) ([]model.ExpenseRecord, int64, error) {
 	page, pageSize := normalizePage(filter.Page, filter.PageSize)
-	q := r.db.WithContext(ctx).Model(&model.ExpenseRecord{})
+	q := connFor(ctx, r.db).Model(&model.ExpenseRecord{})
 	if filter.Status != "" {
 		q = q.Where("status = ?", filter.Status)
 	}
@@ -78,7 +91,7 @@ func (r *expenseRepository) List(ctx context.Context, filter ExpenseListFilter) 
 }
 
 func (r *expenseRepository) Update(ctx context.Context, record *model.ExpenseRecord) error {
-	if err := r.db.WithContext(ctx).Save(record).Error; err != nil {
+	if err := connFor(ctx, r.db).Save(record).Error; err != nil {
 		return fmt.Errorf("update expense record %d: %w", record.ID, err)
 	}
 	return nil

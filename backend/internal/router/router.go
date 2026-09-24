@@ -27,6 +27,7 @@ type Dependencies struct {
 	BudgetHandler         *handler.BudgetHandler
 	ItemHandler           *handler.ItemHandler
 	ExpenseHandler        *handler.ExpenseHandler
+	RefundHandler         *handler.RefundHandler
 	SupplierHandler       *handler.SupplierHandler
 	ReconciliationHandler *handler.ReconciliationHandler
 }
@@ -74,6 +75,8 @@ func New(deps Dependencies) *gin.Engine {
 		expenses.POST("/:id/approve", middleware.RBACMiddleware(middleware.PermissionExpenseApprove), deps.ExpenseHandler.Approve)
 		expenses.POST("/:id/reject", middleware.RBACMiddleware(middleware.PermissionExpenseApprove), deps.ExpenseHandler.Reject)
 		expenses.POST("/:id/pay", middleware.RBACMiddleware(middleware.PermissionExpensePay), deps.ExpenseHandler.Pay)
+		expenses.GET("/:id/refunds", middleware.RBACMiddleware(middleware.PermissionView), deps.RefundHandler.List)
+		expenses.POST("/:id/refunds", middleware.RBACMiddleware(middleware.PermissionExpenseRefund), deps.RefundHandler.Register)
 	}
 
 	suppliers := authed.Group("/suppliers")

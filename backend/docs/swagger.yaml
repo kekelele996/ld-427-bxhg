@@ -179,6 +179,23 @@ definitions:
     - project_id
     - supplier_id
     type: object
+  dto.CreateRefundRequest:
+    properties:
+      amount:
+        type: number
+      reason:
+        maxLength: 512
+        type: string
+      received_date:
+        type: string
+      voucher_no:
+        maxLength: 128
+        type: string
+    required:
+    - amount
+    - received_date
+    - voucher_no
+    type: object
   dto.CreateSupplierRequest:
     properties:
       address:
@@ -831,6 +848,69 @@ paths:
       security:
       - BearerAuth: []
       summary: 确认付款
+      tags:
+      - expenses
+  /expenses/{id}/refunds:
+    get:
+      parameters:
+      - description: 支出记录ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+      security:
+      - BearerAuth: []
+      summary: 查询退款记录
+      tags:
+      - expenses
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 支出记录ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 退款登记请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateRefundRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Body'
+      security:
+      - BearerAuth: []
+      summary: 登记退款
       tags:
       - expenses
   /expenses/{id}/reject:

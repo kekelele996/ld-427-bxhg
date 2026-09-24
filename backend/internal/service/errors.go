@@ -9,4 +9,6 @@ var (
 	ErrInvalidState        = errors.New("service: invalid state transition")
 	ErrInsufficientBalance = errors.New("service: insufficient available balance")
 	ErrForbiddenTransition = errors.New("service: forbidden transition")
+	ErrRefundExceeded      = errors.New("service: cumulative refund amount exceeds paid amount")
+	ErrDuplicateVoucher    = errors.New("service: refund voucher no already registered")
 )

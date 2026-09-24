@@ -29,7 +29,7 @@ func NewItemRepository(db *gorm.DB) ItemRepository {
 }
 
 func (r *itemRepository) Create(ctx context.Context, item *model.BudgetItem) error {
-	if err := r.db.WithContext(ctx).Create(item).Error; err != nil {
+	if err := connFor(ctx, r.db).Create(item).Error; err != nil {
 		return fmt.Errorf("create budget item: %w", err)
 	}
 	return nil
@@ -37,7 +37,7 @@ func (r *itemRepository) Create(ctx context.Context, item *model.BudgetItem) err
 
 func (r *itemRepository) FindByID(ctx context.Context, id uint) (*model.BudgetItem, error) {
 	var item model.BudgetItem
-	if err := r.db.WithContext(ctx).First(&item, id).Error; err != nil {
+	if err := connFor(ctx, r.db).First(&item, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrNotFound
 		}
@@ -48,21 +48,21 @@ func (r *itemRepository) FindByID(ctx context.Context, id uint) (*model.BudgetIt
 
 func (r *itemRepository) ListByBudgetID(ctx context.Context, budgetSheetID uint) ([]model.BudgetItem, error) {
 	var items []model.BudgetItem
-	if err := r.db.WithContext(ctx).Where("budget_sheet_id = ?", budgetSheetID).Order("sort_order ASC, id ASC").Find(&items).Error; err != nil {
+	if err := connFor(ctx, r.db).Where("budget_sheet_id = ?", budgetSheetID).Order("sort_order ASC, id ASC").Find(&items).Error; err != nil {
 		return nil, fmt.Errorf("list budget items for sheet %d: %w", budgetSheetID, err)
 	}
 	return items, nil
 }
 
 func (r *itemRepository) Update(ctx context.Context, item *model.BudgetItem) error {
-	if err := r.db.WithContext(ctx).Save(item).Error; err != nil {
+	if err := connFor(ctx, r.db).Save(item).Error; err != nil {
 		return fmt.Errorf("update budget item %d: %w", item.ID, err)
 	}
 	return nil
 }
 
 func (r *itemRepository) Delete(ctx context.Context, id uint) error {
-	if err := r.db.WithContext(ctx).Delete(&model.BudgetItem{}, id).Error; err != nil {
+	if err := connFor(ctx, r.db).Delete(&model.BudgetItem{}, id).Error; err != nil {
 		return fmt.Errorf("delete budget item %d: %w", id, err)
 	}
 	return nil
