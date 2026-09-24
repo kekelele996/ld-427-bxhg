@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: renovation-budget-api-secret
+type: Opaque
+stringData:
+  DB_PASSWORD: renovation_secret
+  JWT_SECRET: change-me
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: renovation-budget-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: renovation-budget-api
+  template:
+    metadata:
+      labels:
+        app: renovation-budget-api
+    spec:
+      containers:
+        - name: backend
+          image: renovation-budget-api:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+            - name: DB_HOST
+              value: postgres
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: renovation
+            - name: DB_NAME
+              value: renovation_budget
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: renovation-budget-api-secret
+                  key: DB_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: renovation-budget-api-secret
+                  key: JWT_SECRET
+            - name: REDIS_URL
+              value: redis://redis:6379/0
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: renovation-budget-api
+spec:
+  selector:
+    app: renovation-budget-api
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

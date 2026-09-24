@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS reconciliations;
+DROP TABLE IF EXISTS expense_records;
+DROP TABLE IF EXISTS budget_items;
+DROP TABLE IF EXISTS budget_sheets;
+DROP TABLE IF EXISTS suppliers;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS roles;

@@ -1,0 +1,80 @@
+openapi: 3.0.3
+info:
+  title: Renovation Budget API
+  version: 1.0.0
+  description: 装修预算与支出管理 API 服务
+servers:
+  - url: http://localhost:19306/api/v1
+paths:
+  /healthz:
+    get:
+      summary: 健康检查
+      responses:
+        "200":
+          description: ok
+  /auth/login:
+    post:
+      summary: 登录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: ok
+  /budgets:
+    get:
+      summary: 查询预算表列表
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200": { description: ok }
+    post:
+      summary: 创建预算表
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200": { description: ok }
+  /expenses:
+    get:
+      summary: 查询支出记录列表
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200": { description: ok }
+    post:
+      summary: 创建支出记录
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200": { description: ok }
+  /suppliers:
+    get:
+      summary: 查询供应商列表
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200": { description: ok }
+    post:
+      summary: 创建供应商
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200": { description: ok }
+  /reconciliations:
+    get:
+      summary: 查询对账单列表
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200": { description: ok }
+    post:
+      summary: 创建对账单
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200": { description: ok }
+components:
+  securitySchemes:
+    BearerAuth:
+      type: apiKey
+      in: header
+      name: Authorization
